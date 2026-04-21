@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dancing Dashboard Toy Simulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gradient-to-br from-black via-gray-900 to-black text-white">
+
+<div class="app-container">
+
+  <!-- Sidebar Controls -->
+  <div class="controls glass">
+    <h2>System Controls</h2>
+
+    <label>Mass (kg)</label>
+    <input type="range" id="mass" min="0.1" max="5" step="0.1" value="1">
+
+    <label>Stiffness (N/m)</label>
+    <input type="range" id="stiffness" min="1" max="100" step="1" value="20">
+
+    <label>Damping (Ns/m)</label>
+    <input type="range" id="damping" min="0.1" max="20" step="0.1" value="2">
+
+    <label>Force Amplitude</label>
+    <input type="range" id="force" min="1" max="50" step="1" value="10">
+
+    <label>Frequency (rad/s)</label>
+    <input type="range" id="frequency" min="0.1" max="20" step="0.1" value="5">
+
+  </div>
+
+  <!-- Main Display -->
+  <div class="main">
+
+    <!-- 3D Canvas -->
+    <div id="three-container" class="glass canvas-box"></div>
+
+    <!-- Metrics -->
+    <div class="metrics glass">
+      <h3>System Metrics</h3>
+      <p>Natural Frequency: <span id="fn"></span></p>
+      <p>Amplitude: <span id="amp"></span></p>
+      <p>Status: <span id="status"></span></p>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts glass">
+      <canvas id="freqChart"></canvas>
+      <canvas id="timeChart"></canvas>
+    </div>
+
+  </div>
+
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
