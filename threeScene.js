@@ -1,80 +1,79 @@
-import { computeNaturalFrequency, computeAmplitude, simulateMotion, isResonance } from './physics.js';
-import { createCharts } from './charts.js';
-import { initThree } from './threeScene.js';
+export function initThree(container) {
 
-const container = document.getElementById('three-container');
-const { scene, camera, renderer, sphere } = initThree(container);
-const { freqChart, timeChart } = createCharts();
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0f1c);
 
-let params = {
-  m: 1,
-  k: 20,
-  c: 2,
-  F0: 10,
-  omega: 5
-};
+  const camera = new THREE.PerspectiveCamera(
+    60,
+    container.clientWidth / container.clientHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(0, 2, 6);
 
-document.querySelectorAll('input').forEach(input => {
-  input.addEventListener('input', () => {
-    params.m = parseFloat(document.getElementById('mass').value);
-    params.k = parseFloat(document.getElementById('stiffness').value);
-    params.c = parseFloat(document.getElementById('damping').value);
-    params.F0 = parseFloat(document.getElementById('force').value);
-    params.omega = parseFloat(document.getElementById('frequency').value);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.shadowMap.enabled = true;
+  container.appendChild(renderer.domElement);
+
+  // LIGHTING
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  dirLight.position.set(5, 10, 5);
+  dirLight.castShadow = true;
+  scene.add(dirLight);
+
+  // BASE PLATFORM
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(4, 0.3, 4),
+    new THREE.MeshStandardMaterial({ color: 0x1f2937 })
+  );
+  base.receiveShadow = true;
+  scene.add(base);
+
+  // SPRING (HELIX CURVE)
+  const points = [];
+  for (let i = 0; i < 50; i++) {
+    let t = i * 0.2;
+    points.push(new THREE.Vector3(
+      Math.sin(t) * 0.3,
+      i * 0.05,
+      Math.cos(t) * 0.3
+    ));
+  }
+
+  const springGeometry = new THREE.BufferGeometry().setFromPoints(points);
+  const springMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff });
+  const spring = new THREE.Line(springGeometry, springMaterial);
+  spring.position.y = 0.3;
+  scene.add(spring);
+
+  // TOY BODY (BOBBLE HEAD)
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.3, 0.4, 0.8, 32),
+    new THREE.MeshStandardMaterial({ color: 0x4ade80 })
+  );
+  body.position.y = 1;
+  body.castShadow = true;
+  scene.add(body);
+
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.4, 32, 32),
+    new THREE.MeshStandardMaterial({ color: 0xf87171 })
+  );
+  head.position.y = 1.8;
+  head.castShadow = true;
+  scene.add(head);
+
+  // HANDLE RESIZE
+  window.addEventListener("resize", () => {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
   });
-});
 
-let t = 0;
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  t += 0.016;
-
-  const y = simulateMotion(t, params.m, params.c, params.k, params.omega, params.F0);
-  sphere.position.y = 1 + y;
-
-  updateMetrics();
-  updateCharts(y);
-
-  renderer.render(scene, camera);
+  return { scene, camera, renderer, head, body, spring };
 }
-
-function updateMetrics() {
-  const fn = computeNaturalFrequency(params.m, params.k);
-  const amp = computeAmplitude(params.m, params.c, params.k, params.omega, params.F0);
-
-  document.getElementById('fn').innerText = fn.toFixed(2);
-  document.getElementById('amp').innerText = amp.toFixed(2);
-
-  const resonance = isResonance(params.m, params.k, params.omega);
-
-  document.getElementById('status').innerText = resonance ? "⚠ Near Resonance" : "Stable";
-}
-
-function updateCharts(y) {
-
-  if (timeChart.data.labels.length > 100) {
-    timeChart.data.labels.shift();
-    timeChart.data.datasets[0].data.shift();
-  }
-
-  timeChart.data.labels.push('');
-  timeChart.data.datasets[0].data.push(y);
-  timeChart.update();
-
-  // Frequency response
-  let freqs = [];
-  let amps = [];
-
-  for (let w = 0.1; w < 20; w += 0.2) {
-    freqs.push(w);
-    amps.push(computeAmplitude(params.m, params.c, params.k, w, params.F0));
-  }
-
-  freqChart.data.labels = freqs;
-  freqChart.data.datasets[0].data = amps;
-  freqChart.update();
-}
-
-animate();
